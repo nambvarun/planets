@@ -11,6 +11,8 @@
 #include <learnopengl/model.h>
 
 #include <iostream>
+//#include <unordered_map>
+#include <map>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -81,14 +83,14 @@ int main()  {
     Shader shaderLightBox("deferred_light_box.vert", "deferred_light_box.frag");
 
     Model boat(FileSystem::getPath("assets/boat/boat.obj"));
-    Model nanosuit(FileSystem::getPath("assets/boat/nanosuit.obj"));
-    std::vector<glm::vec3> objectPositions;
-    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0, -3.0));
+    Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
+//    std::vector<glm::vec3> objectPositions;
+//    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0, -3.0));
 //
-//    std::map<Model, glm::vec3> objs;
-//    objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
-//    objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
+    std::map<Model, glm::vec3> objs;
+    objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
+    objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
 
 //    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0,  0.0));
@@ -203,23 +205,15 @@ int main()  {
         shaderGeometryPass.use();
         shaderGeometryPass.setMat4("projection", projection);
         shaderGeometryPass.setMat4("view", view);
-        for (unsigned int i = 0; i < objectPositions.size(); i++)
-        {
+
+        for (auto &pair : objs)   {
             model = glm::mat4(1.0f);
-            model = glm::translate(model, objectPositions[i]);
+            model = glm::translate(model, pair.second);
             model = glm::scale(model, glm::vec3(0.25f));
             shaderGeometryPass.setMat4("model", model);
-            boat.Draw(shaderGeometryPass);
+            Model toDraw = pair.first;
+            toDraw.Draw(shaderGeometryPass);
         }
-
-//        for (auto &pair : objs)   {
-//            model = glm::mat4(1.0f);
-//            model = glm::translate(model, pair.second);
-//            model = glm::scale(model, glm::vec3(0.25f));
-//            shaderGeometryPass.setMat4("model", model);
-//            Model toDraw = pair.first;
-//            toDraw.Draw(shaderGeometryPass);
-//        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

@@ -45,6 +45,10 @@ public:
         for(unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
+
+    bool operator <(const Model& rhs) const {
+        return directory < rhs.directory;
+    }
     
 private:
     /*  Functions   */
