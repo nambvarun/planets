@@ -84,6 +84,7 @@ int main()  {
 
     Model boat(FileSystem::getPath("assets/boat/boat.obj"));
     Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
+    Model sphere(FileSystem::getPath("assets/sphere/sphere.obj"));
 //    std::vector<glm::vec3> objectPositions;
 //    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0, -3.0));
@@ -91,6 +92,7 @@ int main()  {
     std::map<Model, glm::vec3> objs;
     objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
     objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
+//    objs.insert(std::pair<Model, glm::vec3>(sphere, glm::))
 
 //    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0,  0.0));
@@ -152,19 +154,19 @@ int main()  {
     const unsigned int NR_LIGHTS = 4;
     std::vector<glm::vec3> lightPositions;
     std::vector<glm::vec3> lightColors;
-    srand(13);
+//    srand(13);
     for (unsigned int i = 0; i < NR_LIGHTS; i++)
     {
         // calculate slightly random offsets
-        float xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
-        float yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
-        float zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+        float xPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
+        float yPos = ((rand() % 100) / 100.0f) * 6.0f - 4.0f;
+        float zPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
         lightPositions.emplace_back(glm::vec3(xPos, yPos, zPos));
 
         // also calculate random color
-        float rColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
-        float gColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
-        float bColor = ((rand() % 100) / 200.0f) + 0.5; // between 0.5 and 1.0
+        float rColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
+        float gColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
+        float bColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
         lightColors.emplace_back(glm::vec3(rColor, gColor, bColor));
     }
 
@@ -209,7 +211,7 @@ int main()  {
         for (auto &pair : objs)   {
             model = glm::mat4(1.0f);
             model = glm::translate(model, pair.second);
-            model = glm::scale(model, glm::vec3(0.25f));
+            model = glm::scale(model, glm::vec3(0.125f));
             shaderGeometryPass.setMat4("model", model);
             Model toDraw = pair.first;
             toDraw.Draw(shaderGeometryPass);
@@ -234,8 +236,8 @@ int main()  {
             shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].Color", lightColors[i]);
             // update attenuation parameters and calculate radius
             const float constant = 1.0; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
-            const float linear = 0.007;
-            const float quadratic = 0.008;
+            const float linear = 0.07;
+            const float quadratic = 0.8;
             shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Linear", linear);
             shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Quadratic", quadratic);
             // then calculate radius of light volume/sphere
@@ -266,10 +268,10 @@ int main()  {
         {
             model = glm::mat4(1.0f);
             model = glm::translate(model, lightPositions[i]);
-            model = glm::scale(model, glm::vec3(0.125f));
+            model = glm::scale(model, glm::vec3(0.01f));
             shaderLightBox.setMat4("model", model);
             shaderLightBox.setVec3("lightColor", lightColors[i]);
-            renderCube();
+            sphere.Draw(shaderLightBox);
         }
 
 
