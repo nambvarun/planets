@@ -82,16 +82,19 @@ int main()  {
     Shader shaderLightingPass("deferred_shading.vert", "deferred_shading.frag");
     Shader shaderLightBox("deferred_light_box.vert", "deferred_light_box.frag");
 
-    Model boat(FileSystem::getPath("assets/boat/boat.obj"));
-    Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
+    // Model boat(FileSystem::getPath("assets/boat/boat.obj"));
+    // Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
     Model sphere(FileSystem::getPath("assets/sphere/sphere.obj"));
+    // Model cornell_box(FileSystem::getPath("assets/cornell_box/cornell_box.obj"));
+    Model miami(FileSystem::getPath("assets/miami/miami.obj"));
 //    std::vector<glm::vec3> objectPositions;
 //    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0, -3.0));
 //
     std::map<Model, glm::vec3> objs;
-    objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
-    objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
+    // objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
+    // objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
+    objs.insert(std::pair<Model, glm::vec3>(miami, glm::vec3(-3.0, -3.0, -3.0)));
 //    objs.insert(std::pair<Model, glm::vec3>(sphere, glm::))
 
 //    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0, -3.0));
