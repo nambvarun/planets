@@ -86,7 +86,10 @@ int main()  {
     // Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
     Model sphere(FileSystem::getPath("assets/sphere/sphere.obj"));
     // Model cornell_box(FileSystem::getPath("assets/cornell_box/cornell_box.obj"));
-    Model miami(FileSystem::getPath("assets/miami/miami.obj"));
+    // Model miami(FileSystem::getPath("assets/miami/miami.obj"));
+    // Model miami(FileSystem::getPath("assets/miami/miami.obj"));
+    // Model Ocean(FileSystem::getPath("assets/Ocean/Ocean.obj"));
+    Model poterie_obj(FileSystem::getPath("assets/poterie_obj/poterie_obj.obj"));
 //    std::vector<glm::vec3> objectPositions;
 //    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0, -3.0));
@@ -94,7 +97,7 @@ int main()  {
     std::map<Model, glm::vec3> objs;
     // objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
     // objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
-    objs.insert(std::pair<Model, glm::vec3>(miami, glm::vec3(-3.0, -3.0, -3.0)));
+    objs.insert(std::pair<Model, glm::vec3>(poterie_obj, glm::vec3(-3.0, -3.0, 0.0)));
 //    objs.insert(std::pair<Model, glm::vec3>(sphere, glm::))
 
 //    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0, -3.0));
