@@ -11,7 +11,6 @@
 #include <learnopengl/model.h>
 
 #include <iostream>
-//#include <unordered_map>
 #include <map>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -49,7 +48,7 @@ int main()  {
 
     // GLFW window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "scene", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -82,25 +81,33 @@ int main()  {
     Shader shaderLightingPass("deferred_shading.vert", "deferred_shading.frag");
     Shader shaderLightBox("deferred_light_box.vert", "deferred_light_box.frag");
 
-    Model boat(FileSystem::getPath("assets/boat/boat.obj"));
-    Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
-    Model sphere(FileSystem::getPath("assets/sphere/sphere.obj"));
+    Model boat(FileSystem::getPath("assets/boat/boat.obj"), "boat");
+//    Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
+    Model sphere(FileSystem::getPath("assets/sphere/sphere.obj"), "light");
+    Model plane1(FileSystem::getPath("assets/plane/plane.obj"), "ground");
+//    Model plane2(FileSystem::getPath("assets/plane/plane.obj"), "wall1");
+//    Model plane3(FileSystem::getPath("assets/plane/plane.obj"), "wall2");
+//    Model plane4(FileSystem::getPath("assets/plane/plane.obj"), "wall3");
+//    Model plane5(FileSystem::getPath("assets/plane/plane.obj"), "wall4");
+
+//    Model cornell(FileSystem::getPath("assets/cornell/cornell.obj"), "cornell");
+
 //    std::vector<glm::vec3> objectPositions;
 //    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0, -3.0));
-//
+
     std::map<Model, glm::vec3> objs;
     objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
-    objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
-//    objs.insert(std::pair<Model, glm::vec3>(sphere, glm::))
+//    objs.insert(std::pair<Model, glm::vec3>(cornell, glm::vec3(-3.0,  -3.0, -3.0)));
+//    objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
+    objs.insert(std::pair<Model, glm::vec3>(plane1, glm::vec3(0.0, -3.0, 0.0)));
+//    objs.insert(std::pair<Model, glm::vec3>(cornell, glm::vec3(0.0, -3.0, 0.0)));
+//    objs.insert(std::pair<Model, glm::vec3>(plane2, glm::vec3(0.0, -3.0, -25.0)));
+//    objs.insert(std::pair<Model, glm::vec3>(plane3, glm::vec3(0.0, -3.0, 25.0)));
+//    objs.insert(std::pair<Model, glm::vec3>(plane4, glm::vec3(-25.0, -3.0, 0.)));
+//    objs.insert(std::pair<Model, glm::vec3>(plane5, glm::vec3(25.0, -3.0, 0.0)));
 
-//    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0, -3.0));
-//    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0,  0.0));
-//    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0,  0.0));
-//    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0,  0.0));
-//    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0,  3.0));
-//    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0,  3.0));
-//    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0,  3.0));
+
 
     // configure g-buffer framebuffer
     // ------------------------------
@@ -144,6 +151,28 @@ int main()  {
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, BUF_WIDTH, BUF_HEIGHT);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
+    // create a fbo for the depth map for the light.
+//    unsigned int depthMapFBO;
+//    glGenFramebuffers(1, &depthMapFBO);
+//
+//    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+//    unsigned int depthMap;
+//    glGenTextures(1, &depthMap);
+//    glBindTexture(GL_TEXTURE_2D, depthMap);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+//                 SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//
+//    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+//    glDrawBuffer(GL_NONE);
+//    glReadBuffer(GL_NONE);
+//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
     // finally check if framebuffer is complete
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "Framebuffer not complete!" << std::endl;
@@ -151,24 +180,32 @@ int main()  {
 
     // lighting info
     // -------------
-    const unsigned int NR_LIGHTS = 4;
+    const unsigned int NR_LIGHTS = 1;
     std::vector<glm::vec3> lightPositions;
     std::vector<glm::vec3> lightColors;
+    std::vector<glm::vec3> lightDir;
 //    srand(13);
-    for (unsigned int i = 0; i < NR_LIGHTS; i++)
-    {
-        // calculate slightly random offsets
-        float xPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
-        float yPos = ((rand() % 100) / 100.0f) * 6.0f - 4.0f;
-        float zPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
-        lightPositions.emplace_back(glm::vec3(xPos, yPos, zPos));
 
-        // also calculate random color
-        float rColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
-        float gColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
-        float bColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
-        lightColors.emplace_back(glm::vec3(rColor, gColor, bColor));
-    }
+
+    lightPositions.emplace_back(glm::vec3(0.0f, 5.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(1.0f, 1.0f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+
+//    for (unsigned int i = 0; i < NR_LIGHTS; i++)
+//    {
+//        // calculate slightly random offsets
+//        float xPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
+//        float yPos = ((rand() % 100) / 100.0f) * 6.0f - 1.0f;
+//        float zPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
+//        lightPositions.emplace_back(glm::vec3(xPos, yPos, zPos));
+//
+//        // also calculate random color
+//        float rColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
+//        float gColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
+//        float bColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
+//        lightColors.emplace_back(glm::vec3(rColor, gColor, bColor));
+//    }
 
     // shader configuration
     // --------------------
@@ -208,13 +245,24 @@ int main()  {
         shaderGeometryPass.setMat4("projection", projection);
         shaderGeometryPass.setMat4("view", view);
 
+        auto i = 0;
         for (auto &pair : objs)   {
             model = glm::mat4(1.0f);
             model = glm::translate(model, pair.second);
+            if (i == 2)
+                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(1, 0, 0));
+            else if (i == 3)
+                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(-1, 0, 0));
+            else if (i == 4)
+                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(0, 0, -1));
+            else if (i == 5)
+                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(0, 0, 1));
+
             model = glm::scale(model, glm::vec3(0.125f));
             shaderGeometryPass.setMat4("model", model);
             Model toDraw = pair.first;
             toDraw.Draw(shaderGeometryPass);
+            ++i;
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -232,18 +280,19 @@ int main()  {
         // send light relevant uniforms
         for (unsigned int i = 0; i < lightPositions.size(); i++)
         {
-            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].Position", lightPositions[i]);
-            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].Color", lightColors[i]);
+            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].position", lightPositions[i]);
+            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].color", lightColors[i]);
+            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].direction", lightDir[i]);
             // update attenuation parameters and calculate radius
             const float constant = 1.0; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
-            const float linear = 0.07;
-            const float quadratic = 0.8;
-            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Linear", linear);
-            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Quadratic", quadratic);
+            const float linear = 0.045;
+            const float quadratic = 0.00075;
+            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].linear", linear);
+            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].quadratic", quadratic);
             // then calculate radius of light volume/sphere
             const float maxBrightness = std::fmaxf(std::fmaxf(lightColors[i].r, lightColors[i].g), lightColors[i].b);
             float radius = (-linear + std::sqrt(linear * linear - 4 * quadratic * (constant - (256.0f / 5.0f) * maxBrightness))) / (2.0f * quadratic);
-            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Radius", radius);
+            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].radius", radius);
         }
         shaderLightingPass.setVec3("viewPos", camera.Position);
         // finally render quad
@@ -403,14 +452,30 @@ void processInput(GLFWwindow *window)   {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboard(FORWARD, deltaTime * 5.0f);
+        else
+            camera.ProcessKeyboard(FORWARD, deltaTime);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboard(BACKWARD, deltaTime * 5.0f);
+        else
+            camera.ProcessKeyboard(BACKWARD, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboard(LEFT, deltaTime * 5.0f);
+        else
+            camera.ProcessKeyboard(LEFT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboard(RIGHT, deltaTime * 5.0f);
+        else
+            camera.ProcessKeyboard(RIGHT, deltaTime);    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
