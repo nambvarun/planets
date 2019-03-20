@@ -30,11 +30,12 @@ public:
     vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh> meshes;
     string directory;
+    string name;
     bool gammaCorrection;
 
     /*  Functions   */
     // constructor, expects a filepath to a 3D model.
-    Model(string const &path, bool gamma = false) : gammaCorrection(gamma)
+    Model(string const &path, string const &name, bool gamma = false) : gammaCorrection(gamma), name(name)
     {
         loadModel(path);
     }
@@ -47,7 +48,7 @@ public:
     }
 
     bool operator <(const Model& rhs) const {
-        return directory < rhs.directory;
+        return name < rhs.name;
     }
     
 private:

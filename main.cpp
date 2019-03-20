@@ -10,9 +10,10 @@
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
 
+#include <chrono>
 #include <iostream>
-//#include <unordered_map>
 #include <map>
+#include <cmath>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -22,7 +23,7 @@ void renderQuad();
 void renderCube();
 
 const unsigned int SCR_WIDTH = 1280;
-const unsigned int SCR_HEIGHT = 720;
+const unsigned int SCR_HEIGHT = 720 ;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
@@ -49,7 +50,7 @@ int main()  {
 
     // GLFW window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "scene", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -84,29 +85,33 @@ int main()  {
 
     // Model boat(FileSystem::getPath("assets/boat/boat.obj"));
     // Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
-    Model sphere(FileSystem::getPath("assets/sphere/sphere.obj"));
+    Model earth(FileSystem::getPath("assets/sphere/sphere.obj"), "earth");
+    Model mars(FileSystem::getPath("assets/mars/sphere.obj"), "mars");
+    Model mercury(FileSystem::getPath("assets/mercury/sphere.obj"), "mercury");
+    Model venus(FileSystem::getPath("assets/venus/sphere.obj"), "venus");
+    Model jupiter(FileSystem::getPath("assets/jupiter/sphere.obj"), "jupiter");
+    Model floor(FileSystem::getPath("assets/plane/plane.obj"), "plane");
     // Model cornell_box(FileSystem::getPath("assets/cornell_box/cornell_box.obj"));
     // Model miami(FileSystem::getPath("assets/miami/miami.obj"));
     // Model miami(FileSystem::getPath("assets/miami/miami.obj"));
     // Model Ocean(FileSystem::getPath("assets/Ocean/Ocean.obj"));
-    Model poterie_obj(FileSystem::getPath("assets/poterie_obj/poterie_obj.obj"));
+    // Model poterie_obj(FileSystem::getPath("assets/poterie_obj/poterie_obj.obj"));
 //    std::vector<glm::vec3> objectPositions;
 //    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0, -3.0));
-//
+
     std::map<Model, glm::vec3> objs;
+    objs.insert(std::pair<Model, glm::vec3>(floor, glm::vec3(0.0, -3.0, 0.0)));
+    objs.insert(std::pair<Model, glm::vec3>(earth, glm::vec3(0.0, 0.0, 0.0)));
+    objs.insert(std::pair<Model, glm::vec3>(mars, glm::vec3(-4.0, 0.0, 6.0)));
+    objs.insert(std::pair<Model, glm::vec3>(venus, glm::vec3(5.0, 0.0, 0.0)));
+    objs.insert(std::pair<Model, glm::vec3>(mercury, glm::vec3(7.0, 0.0, 0.0)));
+    objs.insert(std::pair<Model, glm::vec3>(jupiter, glm::vec3(-11.0, 0.0, 6.0)));
     // objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
     // objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
-    objs.insert(std::pair<Model, glm::vec3>(poterie_obj, glm::vec3(-3.0, -3.0, 0.0)));
+    // objs.insert(std::pair<Model, glm::vec3>(poterie_obj, glm::vec3(-3.0, -3.0, 0.0)));
 //    objs.insert(std::pair<Model, glm::vec3>(sphere, glm::))
 
-//    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0, -3.0));
-//    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0,  0.0));
-//    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0,  0.0));
-//    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0,  0.0));
-//    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0,  3.0));
-//    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0,  3.0));
-//    objectPositions.emplace_back(glm::vec3( 3.0,  -3.0,  3.0));
 
     // configure g-buffer framebuffer
     // ------------------------------
@@ -150,6 +155,28 @@ int main()  {
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, BUF_WIDTH, BUF_HEIGHT);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
+    // create a fbo for the depth map for the light.
+//    unsigned int depthMapFBO;
+//    glGenFramebuffers(1, &depthMapFBO);
+//
+//    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+//    unsigned int depthMap;
+//    glGenTextures(1, &depthMap);
+//    glBindTexture(GL_TEXTURE_2D, depthMap);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+//                 SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//
+//    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+//    glDrawBuffer(GL_NONE);
+//    glReadBuffer(GL_NONE);
+//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
     // finally check if framebuffer is complete
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "Framebuffer not complete!" << std::endl;
@@ -157,24 +184,40 @@ int main()  {
 
     // lighting info
     // -------------
-    const unsigned int NR_LIGHTS = 4;
+    const unsigned int NR_LIGHTS = 1;
     std::vector<glm::vec3> lightPositions;
     std::vector<glm::vec3> lightColors;
+    std::vector<glm::vec3> lightDir;
 //    srand(13);
-    for (unsigned int i = 0; i < NR_LIGHTS; i++)
-    {
-        // calculate slightly random offsets
-        float xPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
-        float yPos = ((rand() % 100) / 100.0f) * 6.0f - 4.0f;
-        float zPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
-        lightPositions.emplace_back(glm::vec3(xPos, yPos, zPos));
 
-        // also calculate random color
-        float rColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
-        float gColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
-        float bColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
-        lightColors.emplace_back(glm::vec3(rColor, gColor, bColor));
-    }
+
+    lightPositions.emplace_back(glm::vec3(0.0f, 2.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(1.0f, 1.0f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(2.0f, 2.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.5f, 0.5f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(5.0f, 5.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.5f, 0.5f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+
+//    for (unsigned int i = 0; i < NR_LIGHTS; i++)
+//    {
+//        // calculate slightly random offsets
+//        float xPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
+//        float yPos = ((rand() % 100) / 100.0f) * 6.0f - 1.0f;
+//        float zPos = ((rand() % 100) / 100.0f) * 6.0f - 3.0f;
+//        lightPositions.emplace_back(glm::vec3(xPos, yPos, zPos));
+//
+//        // also calculate random color
+//        float rColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
+//        float gColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
+//        float bColor = ((rand() % 100) / 100.0f); // between 0.5 and 1.0
+//        lightColors.emplace_back(glm::vec3(rColor, gColor, bColor));
+//    }
 
     // shader configuration
     // --------------------
@@ -186,6 +229,9 @@ int main()  {
     // render loop
     // -----------
     bool once = true;
+    std::clock_t start;
+    float duration;
+    start = std::clock();
     while (!glfwWindowShouldClose(window))  {
         // per-frame time logic
         // --------------------
@@ -207,20 +253,41 @@ int main()  {
         // -----------------------------------------------------------------
         glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)BUF_WIDTH / (float)BUF_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)BUF_WIDTH / (float)BUF_HEIGHT, 0.1f, 1000.0f);
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 model = glm::mat4(1.0f);
         shaderGeometryPass.use();
         shaderGeometryPass.setMat4("projection", projection);
         shaderGeometryPass.setMat4("view", view);
 
+        auto i = 0;
         for (auto &pair : objs)   {
             model = glm::mat4(1.0f);
             model = glm::translate(model, pair.second);
-            model = glm::scale(model, glm::vec3(0.125f));
+//            if (i == 2)
+//                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(1, 0, 0));
+//            else if (i == 3)
+//                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(-1, 0, 0));
+//            else if (i == 4)
+//                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(0, 0, -1));
+//            else if (i == 5)
+//                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(0, 0, 1));
+
+            if (pair.first.name == "mars") {
+                model = glm::scale(model, glm::vec3(0.075f));
+            } else if (pair.first.name == "mercury") {
+                model = glm::scale(model, glm::vec3(0.025f));
+            } else if (pair.first.name == "venus") {
+                model = glm::scale(model, glm::vec3(0.05f));
+            } else if (pair.first.name == "jupiter") {
+                model = glm::scale(model, glm::vec3(0.15f));
+            } else {
+                model = glm::scale(model, glm::vec3(0.125f));
+            }
             shaderGeometryPass.setMat4("model", model);
             Model toDraw = pair.first;
             toDraw.Draw(shaderGeometryPass);
+            ++i;
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -236,22 +303,44 @@ int main()  {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
         // send light relevant uniforms
+        shaderLightingPass.setVec3("cameraPos", camera.Position);
+        shaderLightingPass.setMat4("cameraRot", camera.GetViewMatrix());
+        shaderLightingPass.setMat4("invCameraRot", glm::inverse(camera.GetViewMatrix()));
+        shaderLightingPass.setFloat("seed", 10.f);
         for (unsigned int i = 0; i < lightPositions.size(); i++)
         {
-            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].Position", lightPositions[i]);
-            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].Color", lightColors[i]);
+            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].position", lightPositions[i]);
+            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].color", lightColors[i]);
+            shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].direction", lightDir[i]);
             // update attenuation parameters and calculate radius
             const float constant = 1.0; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
-            const float linear = 0.07;
-            const float quadratic = 0.8;
-            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Linear", linear);
-            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Quadratic", quadratic);
+            const float linear = 0.045;
+            const float quadratic = 0.00075;
+            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].linear", linear);
+            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].quadratic", quadratic);
             // then calculate radius of light volume/sphere
             const float maxBrightness = std::fmaxf(std::fmaxf(lightColors[i].r, lightColors[i].g), lightColors[i].b);
             float radius = (-linear + std::sqrt(linear * linear - 4 * quadratic * (constant - (256.0f / 5.0f) * maxBrightness))) / (2.0f * quadratic);
-            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].Radius", radius);
+            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].radius", radius);
+            shaderLightingPass.setFloat("lights["+std::to_string(i) + "].physicalRadius", 0.4f);
         }
         shaderLightingPass.setVec3("viewPos", camera.Position);
+        shaderLightingPass.setFloat("fov", glm::radians(camera.Zoom));
+        shaderLightingPass.setVec2("u_resolution", glm::vec2(BUF_WIDTH, BUF_HEIGHT));
+        shaderLightingPass.setVec3("cam.eye", camera.Position);
+        shaderLightingPass.setVec3("cam.front", camera.Front);
+        shaderLightingPass.setVec3("cam.up", camera.Up);
+        shaderLightingPass.setFloat("cam.fov", camera.Zoom);
+        shaderLightingPass.setMat4("projection", projection);
+        shaderLightingPass.setVec3("spheres[0].position", objs.at(earth));
+        shaderLightingPass.setFloat("spheres[0].radius", .125f * 20.f);
+
+        duration = ( std::clock() - start ) / (float) CLOCKS_PER_SEC;;
+        shaderLightingPass.setFloat("time", duration);
+
+        lightPositions[0] = glm::vec3(0.0f + 5.0 * std::sin(5 * M_PI * duration / 3), 2.0f, 0.0f + 5.0 * std::sin(2 * M_PI * duration / 3));
+        lightPositions[1] = glm::vec3(0.0f - 5.0 * std::sin(5 * M_PI * duration / 3), 2.0f, 0.0f - 5.0 * std::sin(2 * M_PI * duration / 3));
+
         // finally render quad
         renderQuad();
 
@@ -267,18 +356,18 @@ int main()  {
 
         // 3. render lights on top of scene
         // --------------------------------
-        shaderLightBox.use();
-        shaderLightBox.setMat4("projection", projection);
-        shaderLightBox.setMat4("view", view);
-        for (unsigned int i = 0; i < lightPositions.size(); i++)
-        {
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, lightPositions[i]);
-            model = glm::scale(model, glm::vec3(0.01f));
-            shaderLightBox.setMat4("model", model);
-            shaderLightBox.setVec3("lightColor", lightColors[i]);
-            sphere.Draw(shaderLightBox);
-        }
+//        shaderLightBox.use();
+//        shaderLightBox.setMat4("projection", projection);
+//        shaderLightBox.setMat4("view", view);
+//        for (unsigned int i = 0; i < lightPositions.size(); i++)
+//        {
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, lightPositions[i]);
+//            model = glm::scale(model, glm::vec3(0.01f));
+//            shaderLightBox.setMat4("model", model);
+//            shaderLightBox.setVec3("lightColor", lightColors[i]);
+//            sphere.Draw(shaderLightBox);
+//        }
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -409,14 +498,30 @@ void processInput(GLFWwindow *window)   {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboard(FORWARD, deltaTime * 5.0f);
+        else
+            camera.ProcessKeyboard(FORWARD, deltaTime);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboard(BACKWARD, deltaTime * 5.0f);
+        else
+            camera.ProcessKeyboard(BACKWARD, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboard(LEFT, deltaTime * 5.0f);
+        else
+            camera.ProcessKeyboard(LEFT, deltaTime);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            camera.ProcessKeyboard(RIGHT, deltaTime * 5.0f);
+        else
+            camera.ProcessKeyboard(RIGHT, deltaTime);    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
