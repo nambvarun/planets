@@ -6,10 +6,12 @@ in vec2 TexCoords;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
+uniform vec2 u_resolution;
 
 #define PI 3.14159265358979323846
-#define STEP_COUNT 10
-#define SIGMA 0.3
+#define STEP_COUNT 20
+#define SIGMA 0.2
+#define EPSILON 0.01
 
 struct Light {
     vec3 position;
@@ -24,9 +26,46 @@ struct Light {
                         //      1: Point Light
 };
 
-const int NR_LIGHTS = 1;
+struct Pixel {
+    vec2 coordinate;
+    vec3 color;
+};
+
+struct Plane {
+    vec3 position;
+    vec3 normal;
+};
+
+struct Camera {
+    vec3 eye;
+    vec3 front;
+    vec3 up;
+    float fov;
+};
+
+struct Sphere {
+    float radius;
+    vec3 position;
+};
+
+const int res_x = 1280;         // TODO: set in main.cpp
+const int res_y = 720;          // TODO: set in main.cpp
+const int fov = 45;             // TODO: set in main.cpp
+
+uniform vec3 cameraPos;
+uniform mat4 cameraRot;
+uniform mat4 invCameraRot;
+uniform mat4 projection;
+
+const int NR_LIGHTS = 2;
 uniform Light lights[NR_LIGHTS];
 uniform vec3 viewPos;
+uniform Camera cam;
+
+const int NUM_SPHERES = 1;
+uniform Sphere spheres[NUM_SPHERES];
+
+const float time = 0.0;
 
 const float G_SCATTERING = 0.8;
 const int RAY_MARCH_STEPS = 50;
@@ -53,6 +92,136 @@ float Schlick_GGX(float NV, float NL, float k)  {
 
     return G1 * G2;
 }
+
+Ray getRay(in vec2 uv)  {
+    Ray ray;
+    vec2 iPlaneSize = 2. * tan(0.5 * fov) * vec2(res_x/res_y, 1.);
+    vec2 ixy = (gl_FragCoord.xy/vec2(res_x, res_y) - 1.0) * iPlaneSize;
+
+    ray.origin = cameraPos;
+    ray.dir = (cameraRot * normalize(vec4(ixy.x, ixy.y, -1.0, 0.0))).rgb;
+
+    return ray;
+}
+
+Pixel initPixel(in vec3 color) {
+    Pixel pixel = Pixel(
+        2.0 * gl_FragCoord.xy / u_resolution.xy - 1.0,                          /* coordinate */
+        color                                                                   /* color */
+    );
+
+    float ratio = u_resolution.x / u_resolution.y;
+    if (ratio > 1.0) {
+        pixel.coordinate.x *= ratio;
+    } else {
+        pixel.coordinate.y /= ratio;
+    }
+
+    return pixel;
+}
+
+void sampleCamera(vec2 u, out vec3 rayOrigin, out vec3 rayDir)  {
+    vec2 filmUv = (gl_FragCoord.xy + u)/u_resolution.xy;
+
+    float tx = (2.0 * filmUv.x - 1.0)*(u_resolution.x/u_resolution.y);
+    float ty = (1.0 - 2.0 * filmUv.y);
+    float tz = 0.0;
+
+    rayOrigin = cam.eye;
+    rayDir = normalize(vec3(tx, ty, tz) - rayOrigin);
+}
+
+Ray initRay(in Pixel pixel, in Camera camera) {
+    float focal = 1.0 / tan(radians(camera.fov) / 2.0);
+
+    vec3 forward = normalize(camera.front);
+    vec3 side = normalize(cross(forward, camera.up));
+    vec3 up = normalize(cross(forward, side));
+
+    vec3 direction = normalize(pixel.coordinate.x * side - pixel.coordinate.y * up + focal * forward);
+
+    return Ray(
+    camera.eye,                                                             /* origin */
+    direction                                                               /* direction */
+    );
+}
+
+float computeSphereIntersection(inout Ray ray, in Sphere sphere) {
+    float a = dot(ray.dir, ray.dir);
+    float b = 2.0 * dot(ray.dir, ray.origin - sphere.position);
+    float c = dot(ray.origin - sphere.position, ray.origin - sphere.position) - sphere.radius * sphere.radius;
+    float t = -1.0;
+    float delta = b * b - 4.0 * a * c;
+    if (delta >= 0.0) {
+        float sqrt_delta = sqrt(delta);
+        float t1 = (- b - sqrt_delta) / (2.0 * a);
+        float t2 = (- b + sqrt_delta) / (2.0 * a);
+        float direction = 1.0;
+        if (t1 > 0.0) {
+            t = t1;
+        } else if (t2 > 0.0) {
+            t = t2;
+            direction = -1.0;
+        } else {
+            return t;
+        }
+        ray.origin = ray.origin + t * ray.dir;
+        ray.dir = normalize(ray.origin - sphere.position) * direction;
+    }
+    return t;
+}
+
+void intersectSphere(
+vec3 rayOrigin,
+vec3 rayDir,
+vec3 sphereCentre,
+float sphereRadius,
+inout float rayT)
+{
+    // ray: x = o + dt, sphere: (x - c).(x - c) == r^2
+    // let p = o - c, solve: (dt + p).(dt + p) == r^2
+    //
+    // => (d.d)t^2 + 2(p.d)t + (p.p - r^2) == 0
+    vec3 p = rayOrigin - sphereCentre;
+    vec3 d = rayDir;
+    float a = dot(d, d);
+    float b = 2.0*dot(p, d);
+    float c = dot(p, p) - sphereRadius*sphereRadius;
+    float q = b*b - 4.0*a*c;
+    if (q > 0.0) {
+        float denom = 0.5/a;
+        float z1 = -b*denom;
+        float z2 = abs(sqrt(q)*denom);
+        float t1 = z1 - z2;
+        float t2 = z1 + z2;
+        bool intersected = false;
+        if (0.0 < t1 && t1 < rayT) {
+            intersected = true;
+            rayT = t1;
+        } else if (0.0 < t2 && t2 < rayT) {
+            intersected = true;
+            rayT = t2;
+        }
+    }
+}
+
+
+float computePlaneIntersection(inout Ray ray, in Plane plane) {
+    float t = -1.0;
+    float d = dot(plane.normal, ray.dir);
+    if (abs(d) <= EPSILON) {
+        return t;
+    }
+    t = dot(plane.normal, plane.position - ray.origin) / d;
+    ray.origin = ray.origin + t * ray.dir;
+    ray.dir = -sign(d) * plane.normal;
+    return t;
+}
+
+void intersectScene(Ray ray, inout float t)  {
+    intersectSphere(ray.origin, ray.dir, spheres[0].position, spheres[0].radius, t);
+}
+
 
 // Mie scaterring approximated with Henyey-Greenstein phase function.
 //float computeScattering(float lightDotView)     {
@@ -130,7 +299,6 @@ void main()
 
     vec3 particleIntensity = vec3(1.0/(4.0*PI));
 
-
     // then calculate lighting as usual
     vec3 lighting  = diffuse * .1; // hard-coded ambient component
     vec3 viewDir  = normalize(viewPos - fragPos);
@@ -154,13 +322,21 @@ void main()
         }
 
         // Epiangular Solution
-        vec3 rayOrigin = viewPos;
-        vec3 rayDir = normalize(fragPos - viewPos);
+        Pixel pixel = initPixel(diffuse);
+        Ray ray = initRay(pixel, cam);
+//        Ray ray = getRay(TexCoords);
+        vec3 rayOrigin = ray.origin;
+        vec3 rayDir = ray.dir;
+//        sampleCamera(vec2(0.5, 0.5), rayOrigin, rayDir);
+//        vec3 rayOrigin = viewPos;
+//        vec3 rayDir = normalize(fragPos - viewPos);
 
-        float t = length(fragPos - viewPos); // distance
+//        float t = length(lights[i].position - viewPos); // distance
+        float t = 100.;
+        intersectScene(ray, t);
 
-        if (t > 10)
-            t = 10.0;
+        //        if (t > 10)
+//        float t = 100.0;
 
         vec3 col = vec3(0.0);
         float offset = random();
@@ -169,22 +345,31 @@ void main()
 
             float pdf;
             float x;
-            sampleEquiangular(u, t, rayOrigin, rayDir, lights[i].position, x, pdf);
+            vec3 light_pos = lights[i].position;
+            sampleEquiangular(u, t, rayOrigin, rayDir, light_pos, x, pdf);
 
             pdf *= float(STEP_COUNT);
 
             vec3 particlePos = rayOrigin + x * rayDir;
-            vec3 lightVec = lights[i].position - particlePos;
+            particlePos = particlePos;
+            vec3 lightVec = light_pos - particlePos;
             float d = length(lightVec);
 
-            // need to check for shadows. will do this later.
-            float trans = exp(-SIGMA*(d + x));
-            float geomTerm = 1.0/dot(lightVec, lightVec);
-            col += SIGMA * particleIntensity * 100.0 * geomTerm * trans/pdf;
-        }
-        lighting += col;
+            float t2 = d;
+            Ray ray_to_check = Ray(particlePos, normalize(lightVec));
+            intersectScene(ray_to_check, t2);
 
-    }    
+            // need to check for shadows. will do this later.
+            if (t2 == d)    {
+                float trans = exp(-SIGMA*(d + x));
+                float geomTerm = 1.0/dot(lightVec, lightVec);
+                col += SIGMA * particleIntensity * 100.0 * lights[i].color * geomTerm * trans/pdf;
+            }
+        }
+
+        lighting += pow(col, vec3(1.0/2.2));
+
+    }
     fragColor = vec4(lighting, 1.0);
 
 //    vec3 ray = fragPos - viewPos;

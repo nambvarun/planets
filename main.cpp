@@ -10,8 +10,10 @@
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
 
+#include <chrono>
 #include <iostream>
 #include <map>
+#include <cmath>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -20,8 +22,8 @@ void processInput(GLFWwindow *window);
 void renderQuad();
 void renderCube();
 
-const unsigned int SCR_WIDTH = 1280;
-const unsigned int SCR_HEIGHT = 720;
+const unsigned int SCR_WIDTH = 640;
+const unsigned int SCR_HEIGHT = 480;
 
 // camera
 Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
@@ -81,32 +83,24 @@ int main()  {
     Shader shaderLightingPass("deferred_shading.vert", "deferred_shading.frag");
     Shader shaderLightBox("deferred_light_box.vert", "deferred_light_box.frag");
 
-    Model boat(FileSystem::getPath("assets/boat/boat.obj"), "boat");
-//    Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
-    Model sphere(FileSystem::getPath("assets/sphere/sphere.obj"), "light");
-    Model plane1(FileSystem::getPath("assets/plane/plane.obj"), "ground");
-//    Model plane2(FileSystem::getPath("assets/plane/plane.obj"), "wall1");
-//    Model plane3(FileSystem::getPath("assets/plane/plane.obj"), "wall2");
-//    Model plane4(FileSystem::getPath("assets/plane/plane.obj"), "wall3");
-//    Model plane5(FileSystem::getPath("assets/plane/plane.obj"), "wall4");
-
-//    Model cornell(FileSystem::getPath("assets/cornell/cornell.obj"), "cornell");
+    // Model boat(FileSystem::getPath("assets/boat/boat.obj"));
+    // Model nanosuit(FileSystem::getPath("assets/nanosuit/nanosuit.obj"));
+    Model sphere(FileSystem::getPath("assets/sphere/sphere.obj"), "sphere");
+    Model floor(FileSystem::getPath("assets/plane/plane.obj"), "plane");
+    // Model cornell_box(FileSystem::getPath("assets/cornell_box/cornell_box.obj"));
+//    Model miami(FileSystem::getPath("assets/miami/miami.obj"), "miami");
 
 //    std::vector<glm::vec3> objectPositions;
 //    objectPositions.emplace_back(glm::vec3(-3.0,  -3.0, -3.0));
 //    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0, -3.0));
 
     std::map<Model, glm::vec3> objs;
-    objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
-//    objs.insert(std::pair<Model, glm::vec3>(cornell, glm::vec3(-3.0,  -3.0, -3.0)));
-//    objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
-    objs.insert(std::pair<Model, glm::vec3>(plane1, glm::vec3(0.0, -3.0, 0.0)));
-//    objs.insert(std::pair<Model, glm::vec3>(cornell, glm::vec3(0.0, -3.0, 0.0)));
-//    objs.insert(std::pair<Model, glm::vec3>(plane2, glm::vec3(0.0, -3.0, -25.0)));
-//    objs.insert(std::pair<Model, glm::vec3>(plane3, glm::vec3(0.0, -3.0, 25.0)));
-//    objs.insert(std::pair<Model, glm::vec3>(plane4, glm::vec3(-25.0, -3.0, 0.)));
-//    objs.insert(std::pair<Model, glm::vec3>(plane5, glm::vec3(25.0, -3.0, 0.0)));
-
+    objs.insert(std::pair<Model, glm::vec3>(floor, glm::vec3(0.0, -3.0, 0.0)));
+    objs.insert(std::pair<Model, glm::vec3>(sphere, glm::vec3(0.0, 0.0, 0.0)));
+    // objs.insert(std::pair<Model, glm::vec3>(boat, glm::vec3(-3.0,  -3.0, -3.0)));
+    // objs.insert(std::pair<Model, glm::vec3>(nanosuit, glm::vec3(0.0,  -3.0, -3.0)));
+//    objs.insert(std::pair<Model, glm::vec3>(miami, glm::vec3(-3.0, -3.0, -3.0)));
+//    objs.insert(std::pair<Model, glm::vec3>(sphere, glm::))
 
 
     // configure g-buffer framebuffer
@@ -187,8 +181,12 @@ int main()  {
 //    srand(13);
 
 
-    lightPositions.emplace_back(glm::vec3(0.0f, 5.0f, 0.0f));
+    lightPositions.emplace_back(glm::vec3(0.0f, 2.0f, 0.0f));
     lightColors.emplace_back(glm::vec3(1.0f, 1.0f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(2.0f, 2.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.5f, 0.5f, 1.0f));
     lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
 
 
@@ -217,6 +215,9 @@ int main()  {
     // render loop
     // -----------
     bool once = true;
+    std::clock_t start;
+    float duration;
+    start = std::clock();
     while (!glfwWindowShouldClose(window))  {
         // per-frame time logic
         // --------------------
@@ -238,7 +239,7 @@ int main()  {
         // -----------------------------------------------------------------
         glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)BUF_WIDTH / (float)BUF_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)BUF_WIDTH / (float)BUF_HEIGHT, 0.1f, 1000.0f);
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 model = glm::mat4(1.0f);
         shaderGeometryPass.use();
@@ -249,14 +250,14 @@ int main()  {
         for (auto &pair : objs)   {
             model = glm::mat4(1.0f);
             model = glm::translate(model, pair.second);
-            if (i == 2)
-                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(1, 0, 0));
-            else if (i == 3)
-                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(-1, 0, 0));
-            else if (i == 4)
-                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(0, 0, -1));
-            else if (i == 5)
-                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(0, 0, 1));
+//            if (i == 2)
+//                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(1, 0, 0));
+//            else if (i == 3)
+//                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(-1, 0, 0));
+//            else if (i == 4)
+//                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(0, 0, -1));
+//            else if (i == 5)
+//                model = glm::rotate(model, 3.1415f/2.f, glm::vec3(0, 0, 1));
 
             model = glm::scale(model, glm::vec3(0.125f));
             shaderGeometryPass.setMat4("model", model);
@@ -278,6 +279,10 @@ int main()  {
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
         // send light relevant uniforms
+        shaderLightingPass.setVec3("cameraPos", camera.Position);
+        shaderLightingPass.setMat4("cameraRot", camera.GetViewMatrix());
+        shaderLightingPass.setMat4("invCameraRot", glm::inverse(camera.GetViewMatrix()));
+        shaderLightingPass.setFloat("seed", 10.f);
         for (unsigned int i = 0; i < lightPositions.size(); i++)
         {
             shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].position", lightPositions[i]);
@@ -293,8 +298,25 @@ int main()  {
             const float maxBrightness = std::fmaxf(std::fmaxf(lightColors[i].r, lightColors[i].g), lightColors[i].b);
             float radius = (-linear + std::sqrt(linear * linear - 4 * quadratic * (constant - (256.0f / 5.0f) * maxBrightness))) / (2.0f * quadratic);
             shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].radius", radius);
+            shaderLightingPass.setFloat("lights["+std::to_string(i) + "].physicalRadius", 0.4f);
         }
         shaderLightingPass.setVec3("viewPos", camera.Position);
+        shaderLightingPass.setFloat("fov", glm::radians(camera.Zoom));
+        shaderLightingPass.setVec2("u_resolution", glm::vec2(BUF_WIDTH, BUF_HEIGHT));
+        shaderLightingPass.setVec3("cam.eye", camera.Position);
+        shaderLightingPass.setVec3("cam.front", camera.Front);
+        shaderLightingPass.setVec3("cam.up", camera.Up);
+        shaderLightingPass.setFloat("cam.fov", camera.Zoom);
+        shaderLightingPass.setMat4("projection", projection);
+        shaderLightingPass.setVec3("spheres[0].position", objs.at(sphere));
+        shaderLightingPass.setFloat("spheres[0].radius", .125f * 20.f);
+
+        duration = ( std::clock() - start ) / (float) CLOCKS_PER_SEC;;
+        shaderLightingPass.setFloat("time", duration);
+
+        lightPositions[0] = glm::vec3(0.0f + 5.0 * std::sin(5 * M_PI * duration / 3), 2.0f, 0.0f + 5.0 * std::sin(2 * M_PI * duration / 3));
+        lightPositions[1] = glm::vec3(0.0f - 5.0 * std::sin(5 * M_PI * duration / 3), 2.0f, 0.0f - 5.0 * std::sin(2 * M_PI * duration / 3));
+
         // finally render quad
         renderQuad();
 
@@ -310,18 +332,18 @@ int main()  {
 
         // 3. render lights on top of scene
         // --------------------------------
-        shaderLightBox.use();
-        shaderLightBox.setMat4("projection", projection);
-        shaderLightBox.setMat4("view", view);
-        for (unsigned int i = 0; i < lightPositions.size(); i++)
-        {
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, lightPositions[i]);
-            model = glm::scale(model, glm::vec3(0.01f));
-            shaderLightBox.setMat4("model", model);
-            shaderLightBox.setVec3("lightColor", lightColors[i]);
-            sphere.Draw(shaderLightBox);
-        }
+//        shaderLightBox.use();
+//        shaderLightBox.setMat4("projection", projection);
+//        shaderLightBox.setMat4("view", view);
+//        for (unsigned int i = 0; i < lightPositions.size(); i++)
+//        {
+//            model = glm::mat4(1.0f);
+//            model = glm::translate(model, lightPositions[i]);
+//            model = glm::scale(model, glm::vec3(0.01f));
+//            shaderLightBox.setMat4("model", model);
+//            shaderLightBox.setVec3("lightColor", lightColors[i]);
+//            sphere.Draw(shaderLightBox);
+//        }
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
