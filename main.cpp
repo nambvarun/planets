@@ -358,7 +358,7 @@ int main()  {
             shaderLightingPass.setFloat("lights["+std::to_string(i) + "].physicalRadius", 0.4f);
 
             float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
-            // shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].intensity", 2.0f + 0.5f * std::sin( 1000 * M_PI * duration / 3) * r );
+            shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].intensity", 2.0f + 0.5f * std::sin( 1000 * M_PI * duration / 3) * r );
         }
         shaderLightingPass.setVec3("viewPos", camera.Position);
         shaderLightingPass.setFloat("fov", glm::radians(camera.Zoom));
