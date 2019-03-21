@@ -5,7 +5,7 @@ Final project for CS 248. Run this command below in your terminal to setup your 
 brew install assimp glfw glm
 ```
 
-Minimum/Tested Requirements:
+Minimum and Tested Requirements:
 ```
 MacOS Mojave
 OpenGL 4.1
