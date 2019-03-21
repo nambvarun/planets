@@ -14,6 +14,7 @@
 #include <iostream>
 #include <map>
 #include <cmath>
+#include <stdlib.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -90,7 +91,7 @@ int main()  {
     Model mercury(FileSystem::getPath("assets/mercury/sphere.obj"), "mercury");
     Model venus(FileSystem::getPath("assets/venus/sphere.obj"), "venus");
     Model jupiter(FileSystem::getPath("assets/jupiter/sphere.obj"), "jupiter");
-    Model floor(FileSystem::getPath("assets/plane/plane.obj"), "plane");
+    // Model floor(FileSystem::getPath("assets/plane/plane.obj"), "plane");
     // Model cornell_box(FileSystem::getPath("assets/cornell_box/cornell_box.obj"));
     // Model miami(FileSystem::getPath("assets/miami/miami.obj"));
     // Model miami(FileSystem::getPath("assets/miami/miami.obj"));
@@ -101,7 +102,7 @@ int main()  {
 //    objectPositions.emplace_back(glm::vec3( 0.0,  -3.0, -3.0));
 
     std::map<Model, glm::vec3> objs;
-    objs.insert(std::pair<Model, glm::vec3>(floor, glm::vec3(0.0, -3.0, 0.0)));
+    // objs.insert(std::pair<Model, glm::vec3>(floor, glm::vec3(0.0, -3.0, 0.0)));
     objs.insert(std::pair<Model, glm::vec3>(earth, glm::vec3(0.0, 0.0, 0.0)));
     objs.insert(std::pair<Model, glm::vec3>(mars, glm::vec3(-4.0, 0.0, 6.0)));
     objs.insert(std::pair<Model, glm::vec3>(venus, glm::vec3(5.0, 0.0, 0.0)));
@@ -199,8 +200,36 @@ int main()  {
     lightColors.emplace_back(glm::vec3(0.5f, 0.5f, 1.0f));
     lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
 
-    lightPositions.emplace_back(glm::vec3(5.0f, 5.0f, 0.0f));
-    lightColors.emplace_back(glm::vec3(0.5f, 0.5f, 1.0f));
+    lightPositions.emplace_back(glm::vec3(10.0f, 10.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.8f, 0.8f, 0.8f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(8.0f, 8.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.7f, 0.5f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(5.0f, 10.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.7f, 0.6f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(8.0f, 9.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.5f, 0.9f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(-10.0f, 9.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.8f, 0.8f, 0.8f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(-8.0f, 9.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.7f, 0.5f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(-5.0f, 8.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.7f, 0.6f, 1.0f));
+    lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
+
+    lightPositions.emplace_back(glm::vec3(-8.0f, 7.0f, 0.0f));
+    lightColors.emplace_back(glm::vec3(0.5f, 0.9f, 1.0f));
     lightDir.emplace_back(glm::vec3(-0.0f, -1.0f, -0.0f));
 
 
@@ -232,6 +261,8 @@ int main()  {
     std::clock_t start;
     float duration;
     start = std::clock();
+    int count = 0;
+    bool subtract = true;
     while (!glfwWindowShouldClose(window))  {
         // per-frame time logic
         // --------------------
@@ -259,6 +290,8 @@ int main()  {
         shaderGeometryPass.use();
         shaderGeometryPass.setMat4("projection", projection);
         shaderGeometryPass.setMat4("view", view);
+
+        duration = ( std::clock() - start ) / (float) CLOCKS_PER_SEC;;
 
         auto i = 0;
         for (auto &pair : objs)   {
@@ -314,8 +347,8 @@ int main()  {
             shaderLightingPass.setVec3("lights[" + std::to_string(i) + "].direction", lightDir[i]);
             // update attenuation parameters and calculate radius
             const float constant = 1.0; // note that we don't send this to the shader, we assume it is always 1.0 (in our case)
-            const float linear = 0.045;
-            const float quadratic = 0.00075;
+            const float linear = 0.000045;
+            const float quadratic = 0.075;
             shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].linear", linear);
             shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].quadratic", quadratic);
             // then calculate radius of light volume/sphere
@@ -323,6 +356,9 @@ int main()  {
             float radius = (-linear + std::sqrt(linear * linear - 4 * quadratic * (constant - (256.0f / 5.0f) * maxBrightness))) / (2.0f * quadratic);
             shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].radius", radius);
             shaderLightingPass.setFloat("lights["+std::to_string(i) + "].physicalRadius", 0.4f);
+
+            float r = static_cast <float> (rand()) / static_cast <float> (RAND_MAX);
+            // shaderLightingPass.setFloat("lights[" + std::to_string(i) + "].intensity", 2.0f + 0.5f * std::sin( 1000 * M_PI * duration / 3) * r );
         }
         shaderLightingPass.setVec3("viewPos", camera.Position);
         shaderLightingPass.setFloat("fov", glm::radians(camera.Zoom));
@@ -335,11 +371,12 @@ int main()  {
         shaderLightingPass.setVec3("spheres[0].position", objs.at(earth));
         shaderLightingPass.setFloat("spheres[0].radius", .125f * 20.f);
 
-        duration = ( std::clock() - start ) / (float) CLOCKS_PER_SEC;;
+        
         shaderLightingPass.setFloat("time", duration);
 
         lightPositions[0] = glm::vec3(0.0f + 5.0 * std::sin(5 * M_PI * duration / 3), 2.0f, 0.0f + 5.0 * std::sin(2 * M_PI * duration / 3));
         lightPositions[1] = glm::vec3(0.0f - 5.0 * std::sin(5 * M_PI * duration / 3), 2.0f, 0.0f - 5.0 * std::sin(2 * M_PI * duration / 3));
+
 
         // finally render quad
         renderQuad();
